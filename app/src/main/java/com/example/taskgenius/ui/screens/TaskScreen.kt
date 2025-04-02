@@ -26,17 +26,20 @@ fun TaskScreen(
     tasks: List<TaskEntity>,
     onTaskClick: (TaskEntity) -> Unit,
     onTaskStatusChange: (Int, TaskStatus) -> Unit,
-    onTaskAdd: (TaskEntity) -> Unit
+    onTaskAdd: (TaskEntity) -> Unit,
+    onNavigateToNewTask: () -> Unit
 ) {
-    var manualTaskTitle by remember { mutableStateOf("") }
     var speechInput by remember { mutableStateOf("") }
     val context = LocalContext.current
     val speechRecognizer = remember { SpeechRecognizerHelper(context) { speechInput = it } }
     val coroutineScope = rememberCoroutineScope()
     var isListening by remember { mutableStateOf(false) }
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 16.dp, top = 50.dp, start = 16.dp, end = 16.dp)
+    ) {
         Text(
             text = "Your Tasks",
             style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
@@ -64,38 +67,15 @@ fun TaskScreen(
                     isListening = false
                 }
             }
-
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            BasicTextField(
-                value = manualTaskTitle,
-                onValueChange = { manualTaskTitle = it },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp),
-                singleLine = true
-            )
-            Button(
-                onClick = {
-                    if (manualTaskTitle.isNotBlank()) {
-                        val newTask = TaskEntity(
-                            title = manualTaskTitle,
-                            description = "Manually added task",
-                            category = "Manual",
-                            createdAt = System.currentTimeMillis(),
-                            dueAt = null,
-                            status = TaskStatus.PENDING
-                        )
-                        onTaskAdd(newTask)
-                        manualTaskTitle = ""
-                    }
-                }
-            ) {
-                Text("➕ Add")
-            }
+        Button(
+            onClick = onNavigateToNewTask,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("➕ Add New Task")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
