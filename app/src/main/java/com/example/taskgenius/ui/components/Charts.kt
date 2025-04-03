@@ -1,6 +1,5 @@
 package com.example.taskgenius.ui.components
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -19,10 +18,11 @@ import co.yml.charts.ui.linechart.model.LineStyle
 import co.yml.charts.ui.linechart.model.SelectionHighlightPoint
 import co.yml.charts.ui.linechart.model.SelectionHighlightPopUp
 import co.yml.charts.ui.linechart.model.ShadowUnderLine
+import com.example.taskgenius.data.local.TaskEntity
 
 
 @Composable
-fun Charts() {
+fun Charts(task: TaskEntity) {
     val steps = 5
     val pointsData: List<Point> =
         listOf(Point(0f, 40f), Point(1f, 90f), Point(2f, 0f), Point(3f, 60f), Point(4f, 10f))
