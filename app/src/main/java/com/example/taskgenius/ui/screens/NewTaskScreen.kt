@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,17 +23,22 @@ import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.ui.platform.LocalContext
 import com.commandiron.wheel_picker_compose.core.TimeFormat
+import com.example.taskgenius.helper.NotificationWorker
 import com.example.taskgenius.ui.components.TaskNotificationReceiver
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.min
 
 @Composable
 fun NewTaskScreen(
@@ -44,6 +50,7 @@ fun NewTaskScreen(
     val context = LocalContext.current
     var taskTitle by remember { mutableStateOf("") }
     var startTime by remember { mutableStateOf(LocalTime.now().plusMinutes(1)) }
+    Log.d("timeformat1", LocalTime.now().toString())
     var endTime by remember { mutableStateOf(startTime.plusMinutes(5)) }
     var showCustomDialog by remember { mutableStateOf(false) }
 
@@ -168,12 +175,20 @@ fun NewTaskScreen(
             onClick = @androidx.annotation.RequiresPermission(android.Manifest.permission.SCHEDULE_EXACT_ALARM) {
 
                 if (startTime < LocalTime.now()) {
-                    Toast.makeText(context, "Invalid Start Time! Cannot be before the current time.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Invalid Start Time! Cannot be before the current time.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@Button
                 }
 
                 if (endTime <= startTime) {
-                    Toast.makeText(context, "Invalid End Time! Must be after Start Time.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Invalid End Time! Must be after Start Time.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@Button
                 }
 
@@ -190,7 +205,8 @@ fun NewTaskScreen(
                     )
 
                     if (notifyMe) {
-                        scheduleNotification(context, taskTitle, startTime, endTime)
+                        val minutevalue= ChronoUnit.MINUTES.between(LocalTime.now(),startTime).minutes
+                        scheduleNotificationWithWorkManager(context, taskTitle, minutevalue.inWholeMinutes)
                     }
                     onTaskAdded(newTask)
                 }
@@ -219,16 +235,26 @@ fun NewTaskScreen(
 fun validateStartTime(context: Context, selectedTime: LocalTime, onValidated: (LocalTime) -> Unit) {
     val now = LocalTime.now()
     if (selectedTime < now) {
-        Toast.makeText(context, "Invalid Start Time! Cannot be before the current time.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            "Invalid Start Time! Cannot be before the current time.",
+            Toast.LENGTH_SHORT
+        ).show()
         onValidated(now.plusMinutes(1))
     } else {
         onValidated(selectedTime)
     }
 }
 
-fun validateEndTime(context: Context, startTime: LocalTime, selectedTime: LocalTime, onValidated: (LocalTime) -> Unit) {
+fun validateEndTime(
+    context: Context,
+    startTime: LocalTime,
+    selectedTime: LocalTime,
+    onValidated: (LocalTime) -> Unit
+) {
     if (selectedTime <= startTime) {
-        Toast.makeText(context, "Invalid End Time! Must be after Start Time.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Invalid End Time! Must be after Start Time.", Toast.LENGTH_SHORT)
+            .show()
         onValidated(startTime.plusMinutes(5))
     } else {
         onValidated(selectedTime)
@@ -292,7 +318,12 @@ fun formatDuration(duration: Duration): String {
     }
 }
 
-fun scheduleNotification(context: Context, title: String, startTime: LocalTime, endTime: LocalTime) {
+fun scheduleNotification(
+    context: Context,
+    title: String,
+    startTime: LocalTime,
+    endTime: LocalTime
+) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -313,7 +344,10 @@ fun scheduleNotification(context: Context, title: String, startTime: LocalTime, 
     }
 
     val pendingIntent = PendingIntent.getBroadcast(
-        context, title.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        context,
+        title.hashCode(),
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
     val triggerTime = LocalDateTime.now()
@@ -324,15 +358,36 @@ fun scheduleNotification(context: Context, title: String, startTime: LocalTime, 
         .toEpochMilli()
 
     try {
+        Log.d("triggertime", triggerTime.toString())
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
     } catch (e: SecurityException) {
-        Toast.makeText(context, "Cannot schedule exact alarms. Grant permission manually.", Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            context,
+            "Cannot schedule exact alarms. Grant permission manually.",
+            Toast.LENGTH_LONG
+        ).show()
     }
 }
 
 fun LocalTime.formatTime(): String {
     val formatter = DateTimeFormatter.ofPattern("hh:mm a")
     return this.format(formatter)
+}
+
+
+
+fun scheduleNotificationWithWorkManager(context: Context, title: String, delayInMinutes: Long) {
+    val data = Data.Builder()
+        .putString("TASK_TITLE", title)
+        .putString("TASK_TIME", "Scheduled for $delayInMinutes minutes from now")
+        .build()
+
+    val workRequest = OneTimeWorkRequestBuilder<NotificationWorker>()
+        .setInitialDelay(delayInMinutes, TimeUnit.MINUTES)
+        .setInputData(data)
+        .build()
+
+    WorkManager.getInstance(context).enqueue(workRequest)
 }
 
 

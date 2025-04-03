@@ -58,7 +58,7 @@ fun TaskScreen(
             LaunchedEffect(speechInput) {
                 coroutineScope.launch {
                     Toast.makeText(context, "Got the text: $speechInput", Toast.LENGTH_SHORT).show()
-                    val generatedTask = TaskAIHelper.generateTaskFromInput(speechInput)
+                    val generatedTask = TaskAIHelper.generateTaskFromInput(speechInput,context)
                     Toast.makeText(context, "Generated task: ${generatedTask.title}", Toast.LENGTH_SHORT).show()
 
                     onTaskAdd(generatedTask)
