@@ -1,5 +1,6 @@
 package com.example.taskgenius
 
+import Charts
 import android.Manifest
 import android.app.AlarmManager
 import android.app.NotificationChannel
@@ -27,7 +28,7 @@ import com.example.taskgenius.data.local.TaskDatabase
 import com.example.taskgenius.data.local.TaskEntity
 import com.example.taskgenius.data.repository.TaskRepository
 import com.example.taskgenius.factory.TaskViewModelFactory
-import com.example.taskgenius.ui.components.Charts
+import com.example.taskgenius.ui.screens.CategoryTasksScreen
 import com.example.taskgenius.ui.screens.NewTaskScreen
 import com.example.taskgenius.ui.screens.TaskScreen
 import com.example.taskgenius.viewmodel.TaskViewModel
@@ -63,7 +64,7 @@ class MainActivity : ComponentActivity() {
 
     private fun hasExactAlarmPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AlarmManagerCompat.canScheduleExactAlarms(getSystemService(Context.ALARM_SERVICE) as AlarmManager)
+            AlarmManagerCompat.canScheduleExactAlarms(getSystemService(ALARM_SERVICE) as AlarmManager)
         } else {
             true
         }
@@ -120,17 +121,22 @@ class MainActivity : ComponentActivity() {
                     TaskScreen(
                         tasks = tasks,
                         onTaskClick = { task ->
-
-                            val taskJson= Gson().toJson(task)
-                            navController.navigate("task_details/$taskJson") },
-                        onTaskStatusChange = { id, status ->
-                            taskViewModel.updateTaskStatus(
-                                id,
-                                status
-                            )
+                            val taskJson = Gson().toJson(task)
+                            navController.navigate("task_details/$taskJson")
                         },
-                        onTaskAdd = { task -> taskViewModel.addTask(task) },
-                        onNavigateToNewTask = { navController.navigate("new_task") }
+                        onTaskStatusChange = { taskId, newStatus ->
+                            taskViewModel.updateTaskStatus(taskId, newStatus)
+                        },
+                        onTaskAdd = { task ->
+                            taskViewModel.addTask(task)
+                        },
+                        onNavigateToNewTask = {
+                            navController.navigate("new_task")
+                        }
+                        ,
+                        onCardClick = { category ->
+                            navController.navigate("category_tasks/$category")
+                        }
                     )
                 }
 
@@ -151,6 +157,17 @@ class MainActivity : ComponentActivity() {
                     task?.let {
                         Charts(task = it)
                     }
+                }
+                composable("category_tasks/{category}") { backStackEntry ->
+                    val category = backStackEntry.arguments?.getString("category") ?: ""
+                    CategoryTasksScreen(
+                        category = category,
+                        onTaskClick = { task ->
+                            val taskJson = Gson().toJson(task)
+                            navController.navigate("task_details/$taskJson")
+                        },
+                        viewModel = taskViewModel
+                    )
                 }
             }
         }

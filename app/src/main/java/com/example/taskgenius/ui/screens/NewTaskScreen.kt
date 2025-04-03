@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.commandiron.wheel_picker_compose.core.TimeFormat
 import com.example.taskgenius.helper.NotificationWorker
 import com.example.taskgenius.ui.components.TaskNotificationReceiver
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -173,7 +174,6 @@ fun NewTaskScreen(
 
         Button(
             onClick = @androidx.annotation.RequiresPermission(android.Manifest.permission.SCHEDULE_EXACT_ALARM) {
-
                 if (startTime < LocalTime.now()) {
                     Toast.makeText(
                         context,
@@ -182,7 +182,6 @@ fun NewTaskScreen(
                     ).show()
                     return@Button
                 }
-
                 if (endTime <= startTime) {
                     Toast.makeText(
                         context,
@@ -191,22 +190,20 @@ fun NewTaskScreen(
                     ).show()
                     return@Button
                 }
-
-
-
                 if (taskTitle.isNotBlank()) {
                     val newTask = TaskEntity(
                         title = taskTitle,
                         description = "User created task",
                         category = "Manual",
-                        createdAt = System.currentTimeMillis(),
-                        dueAt = null,
+                        createdAt = LocalDateTime.of(LocalDate.now(), startTime)
+                            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                        dueAt = LocalDateTime.of(LocalDate.now(), endTime)
+                            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
                         status = TaskStatus.PENDING
                     )
-
                     if (notifyMe) {
-                        val minutevalue= ChronoUnit.MINUTES.between(LocalTime.now(),startTime).minutes
-                        scheduleNotificationWithWorkManager(context, taskTitle, minutevalue.inWholeMinutes)
+                        val minuteValue = ChronoUnit.MINUTES.between(LocalTime.now(), startTime).minutes
+                        scheduleNotificationWithWorkManager(context, taskTitle, minuteValue.inWholeMinutes)
                     }
                     onTaskAdded(newTask)
                 }
@@ -215,6 +212,7 @@ fun NewTaskScreen(
         ) {
             Text("Save Task")
         }
+
 
         if (showCustomDialog) {
             CustomDurationDialog(

@@ -1,4 +1,5 @@
 package com.example.taskgenius.viewmodel
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskgenius.data.local.TaskEntity
@@ -10,7 +11,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
-
     private val _tasks = MutableStateFlow<List<TaskEntity>>(emptyList())
     val tasks: StateFlow<List<TaskEntity>> = _tasks
 
@@ -37,10 +37,20 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
         }
     }
 
+    fun getTasksByCategory(category: String): StateFlow<List<TaskEntity>> {
+        val filteredTasks = MutableStateFlow<List<TaskEntity>>(emptyList())
+        viewModelScope.launch {
+            repository.getTasksByCategory(category).collectLatest { taskList ->
+                filteredTasks.value = taskList
+            }
+        }
+        return filteredTasks
+    }
+
+
     fun addTask(task: TaskEntity) {
         viewModelScope.launch {
             repository.insertTask(task)
-            _tasks.value=_tasks.value+task
         }
     }
 

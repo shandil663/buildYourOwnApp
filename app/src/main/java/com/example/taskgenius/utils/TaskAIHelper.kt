@@ -14,6 +14,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -23,7 +25,7 @@ import kotlin.time.Duration.Companion.minutes
 
 object TaskAIHelper {
 
-    suspend fun generateTaskFromInput(input: String,context: Context): TaskEntity {
+    suspend fun generateTaskFromInput(input: String, context: Context): TaskEntity {
         return withContext(Dispatchers.IO) {
             try {
 
@@ -32,20 +34,39 @@ object TaskAIHelper {
 //                val (date1, time1) = extractDateTime(taskDetails.createdAt.toString())
 //                val (date2, time2) = extractDateTime(taskDetails.dueAt.toString())
 //
+                val startTime = unixToLocalTime(taskDetails.createdAt)
+                val endTime = unixToLocalTime(taskDetails.dueAt?.toLong() ?: 0)
                 if (taskDetails.description.equals("YES")) {
-                    val startTime=unixToLocalTime(taskDetails.createdAt)
-                    val minutevalue = ChronoUnit.MINUTES.between(LocalTime.now(), startTime).minutes
-                    scheduleNotificationWithWorkManager(
-                        context,
-                        taskDetails.title,
-                        minutevalue.inWholeMinutes
-                    )
+                    val startTime = unixToLocalTime(taskDetails.createdAt)
+                    val currentTime = LocalTime.now()
+
+                    val isPM = currentTime.hour >= 12
+                    val adjustedStartTime = if (isPM) {
+                        startTime.plusHours(12) // Ensure it's in PM range
+                    } else {
+                        startTime.minusHours(12) // Ensure it's in AM range
+                    }
+
+                    Log.d("hello",adjustedStartTime.toString())
+
+                    val minuteValue =
+                        ChronoUnit.MINUTES.between(currentTime, adjustedStartTime).minutes
+                    if (minuteValue.inWholeMinutes > 0) {
+                        scheduleNotificationWithWorkManager(
+                            context,
+                            taskDetails.title,
+                            minuteValue.inWholeMinutes
+                        )
+                    }
                 }
+
                 TaskEntity(
                     title = taskDetails.title,
                     category = taskDetails.category,
-                    createdAt = taskDetails.createdAt,
-                    dueAt = taskDetails.dueAt,
+                    createdAt = LocalDateTime.of(LocalDate.now(), startTime)
+                        .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                    dueAt = LocalDateTime.of(LocalDate.now(), endTime)
+                        .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
                     status = TaskStatus.PENDING,
                     id = taskDetails.id,
                     description = taskDetails.description
