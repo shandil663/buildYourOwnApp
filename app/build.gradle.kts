@@ -71,6 +71,7 @@ dependencies {
     kapt("com.google.dagger:hilt-compiler:2.51.1")
     implementation ("androidx.work:work-runtime-ktx:2.8.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.airbnb.android:lottie-compose:6.3.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation ("androidx.navigation:navigation-compose:2.8.9")
 

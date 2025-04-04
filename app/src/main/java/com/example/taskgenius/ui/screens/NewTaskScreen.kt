@@ -29,8 +29,12 @@ import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.commandiron.wheel_picker_compose.core.TimeFormat
 import com.example.taskgenius.helper.NotificationWorker
@@ -59,7 +63,8 @@ fun NewTaskScreen(
         ChronoUnit.MINUTES.between(startTime, endTime).minutes
     }
     val formattedDuration by remember(duration) { mutableStateOf(formatDuration(duration)) }
-
+    var showCategoryDialog by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf("General") }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -72,8 +77,17 @@ fun NewTaskScreen(
             value = taskTitle,
             onValueChange = { taskTitle = it },
             label = { Text("Task Title") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor =Color(0xFFE18181),
+                unfocusedBorderColor =Color(0xFFE18181).copy(alpha = 0.5f),
+                cursorColor = Color(0xFFE18181)
+            )
         )
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -88,7 +102,7 @@ fun NewTaskScreen(
                     WheelTimePicker(
                         startTime = startTime,
                         timeFormat = TimeFormat.AM_PM,
-                        textColor = MaterialTheme.colorScheme.onBackground,
+                        textColor =Color(0xFFE18181),
                         onSnappedTime = { newTime ->
                             validateStartTime(context, newTime) { validTime ->
                                 startTime = validTime
@@ -108,7 +122,7 @@ fun NewTaskScreen(
                     WheelTimePicker(
                         startTime = endTime,
                         timeFormat = TimeFormat.AM_PM,
-                        textColor = MaterialTheme.colorScheme.onBackground,
+                        textColor = Color(0xFFE18181),
                         onSnappedTime = { newTime ->
                             validateEndTime(context, startTime, newTime) { validTime ->
                                 endTime = validTime
@@ -137,15 +151,32 @@ fun NewTaskScreen(
                     val newStartTime = LocalTime.now().plusMinutes(1)
                     startTime = newStartTime
                     endTime = newStartTime.plusMinutes(minutes.toLong())
-                }) {
+                },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE18181)
+                    )
+
+                ) {
                     Text(label)
                 }
             }
-            Button(onClick = { showCustomDialog = true }) {
+            Button(onClick = { showCustomDialog = true },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE18181)
+                )) {
                 Text("Custom")
             }
         }
-
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = { showCategoryDialog = true },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFE18181)
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Category: $selectedCategory")
+        }
         Spacer(modifier = Modifier.height(24.dp))
         Row(
             modifier = Modifier
@@ -158,7 +189,7 @@ fun NewTaskScreen(
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notification",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = Color(0xFFE18181)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = "Notify Me", style = MaterialTheme.typography.bodyLarge)
@@ -166,7 +197,11 @@ fun NewTaskScreen(
 
             Switch(
                 checked = notifyMe,
-                onCheckedChange = { notifyMe = it }
+                onCheckedChange = { notifyMe = it },
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = Color(0xFFE18181),
+                    uncheckedTrackColor = Color.Gray
+                )
             )
         }
 
@@ -194,7 +229,7 @@ fun NewTaskScreen(
                     val newTask = TaskEntity(
                         title = taskTitle,
                         description = "User created task",
-                        category = "Manual",
+                        category = selectedCategory,
                         createdAt = LocalDateTime.of(LocalDate.now(), startTime)
                             .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
                         dueAt = LocalDateTime.of(LocalDate.now(), endTime)
@@ -208,9 +243,13 @@ fun NewTaskScreen(
                     onTaskAdded(newTask)
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFE18181) // Custom background color
+            )
         ) {
             Text("Save Task")
+
         }
 
 
@@ -226,7 +265,20 @@ fun NewTaskScreen(
                 onDismiss = { showCustomDialog = false }
             )
         }
+        if (showCategoryDialog) {
+            CategorySelectionDialog(
+                selectedCategory = selectedCategory,
+                onCategorySelected = { category ->
+                    selectedCategory = category
+                    showCategoryDialog = false
+                },
+                onDismiss = { showCategoryDialog = false }
+            )
+        }
     }
+
+
+
 }
 
 
@@ -283,7 +335,7 @@ fun CustomDurationDialog(
                 Text("Custom Duration", style = MaterialTheme.typography.headlineSmall)
                 WheelTimePicker(
                     startTime = LocalTime.of(hours.value, minutes.value),
-                    textColor = MaterialTheme.colorScheme.onBackground,
+                    textColor = Color(0xFFE18181),
                     onSnappedTime = {
                         hours.value = it.hour
                         minutes.value = it.minute
@@ -296,7 +348,10 @@ fun CustomDurationDialog(
                             onDurationSelected(hours.value, minutes.value)
                         }
                         onDismiss()
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE18181)
+                    )
                 ) {
                     Text("Done")
                 }
@@ -316,56 +371,6 @@ fun formatDuration(duration: Duration): String {
     }
 }
 
-fun scheduleNotification(
-    context: Context,
-    title: String,
-    startTime: LocalTime,
-    endTime: LocalTime
-) {
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (!alarmManager.canScheduleExactAlarms()) {
-            Toast.makeText(context, "Exact alarm permission required!", Toast.LENGTH_SHORT).show()
-            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                data = Uri.parse("package:${context.packageName}")
-            }
-            context.startActivity(intent)
-            return
-        }
-    }
-
-    val notificationTime = startTime.minusMinutes(1)
-    val intent = Intent(context, TaskNotificationReceiver::class.java).apply {
-        putExtra("TASK_TITLE", title)
-        putExtra("TASK_TIME", "${startTime.formatTime()} - ${endTime.formatTime()}")
-    }
-
-    val pendingIntent = PendingIntent.getBroadcast(
-        context,
-        title.hashCode(),
-        intent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-
-    val triggerTime = LocalDateTime.now()
-        .withHour(notificationTime.hour)
-        .withMinute(notificationTime.minute)
-        .atZone(ZoneId.systemDefault())
-        .toInstant()
-        .toEpochMilli()
-
-    try {
-        Log.d("triggertime", triggerTime.toString())
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-    } catch (e: SecurityException) {
-        Toast.makeText(
-            context,
-            "Cannot schedule exact alarms. Grant permission manually.",
-            Toast.LENGTH_LONG
-        ).show()
-    }
-}
 
 fun LocalTime.formatTime(): String {
     val formatter = DateTimeFormatter.ofPattern("hh:mm a")
@@ -388,4 +393,49 @@ fun scheduleNotificationWithWorkManager(context: Context, title: String, delayIn
     WorkManager.getInstance(context).enqueue(workRequest)
 }
 
+@Composable
+fun CategorySelectionDialog(
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val categories = listOf("Professional", "Personal", "Household", "Social", "Wellness", "General")
 
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Select Category", style = MaterialTheme.typography.headlineSmall)
+
+                categories.forEach { category ->
+                    Button(
+                        onClick = { onCategorySelected(category) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE18181)
+                        )
+                    ) {
+                        Text(category)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE18181) // Custom background color
+                    )
+                ) {
+                    Text("Cancel")
+                }
+            }
+        }
+    }
+}

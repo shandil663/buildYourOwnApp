@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.RECORD_AUDIO
     ).apply {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            add(Manifest.permission.POST_NOTIFICATIONS) // Required for Android 13+
+            add(Manifest.permission.POST_NOTIFICATIONS)
         }
     }.toTypedArray()
 

@@ -36,7 +36,7 @@ fun CircularTimer(taskStart: Long, taskEnd: Long) {
             val progress = (1f - remainingTime.toFloat() / totalDuration)
             animatedProgress.animateTo(progress, animationSpec = tween(1000, easing = LinearEasing))
 
-            delay(1000L) // Update every second
+            delay(1000L)
         }
     }
 
@@ -64,7 +64,7 @@ fun CircularTimer(taskStart: Long, taskEnd: Long) {
             )
 
             drawArc(
-                color = Color(0xFF4CAF50), // Progress Color
+                color = Color(0xFF4CAF50),
                 startAngle = -90f,
                 sweepAngle = animatedProgress.value * 360f,
                 useCenter = false,

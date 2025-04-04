@@ -31,9 +31,8 @@ object TaskAIHelper {
 
                 val taskDetails = GeminiHelper.generateTaskFromInput(input)
                 Log.d("Hello ", taskDetails.toString())
-//                val (date1, time1) = extractDateTime(taskDetails.createdAt.toString())
-//                val (date2, time2) = extractDateTime(taskDetails.dueAt.toString())
-//
+
+
                 val startTime = unixToLocalTime(taskDetails.createdAt)
                 val endTime = unixToLocalTime(taskDetails.dueAt?.toLong() ?: 0)
                 if (taskDetails.description.equals("YES")) {
@@ -42,9 +41,9 @@ object TaskAIHelper {
 
                     val isPM = currentTime.hour >= 12
                     val adjustedStartTime = if (isPM) {
-                        startTime.plusHours(12) // Ensure it's in PM range
+                        startTime.plusHours(12)
                     } else {
-                        startTime.minusHours(12) // Ensure it's in AM range
+                        startTime.minusHours(12)
                     }
 
                     Log.d("hello",adjustedStartTime.toString())

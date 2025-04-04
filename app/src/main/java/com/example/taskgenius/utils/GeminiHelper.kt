@@ -26,7 +26,7 @@ object GeminiHelper {
             try {
                 val response = RetrofitClient.generateTask(
                     input + "\n\n\n\"Extract and categorize the input into the following structured format without adding any extra details. Your response should only contain the extracted fields in JSON format:\n\n{\n" +
-                            "  \"title\": \"Your refined title up to three words only\",\n" +
+                            "  \"title\": \"Your refined title up to two words only\",\n" +
                             "  \"description\": \"if user included the word remainder or notify me or remind me then here in the description only put YES nothing else \",\n" +
                             "  \"createdAt\": \"ISO 8601 format use UTC+05:30 and  extract the timing from the input where input contains startAt: timing also convert the time do not return +05:30 and we are in 2025\",\n" +
                             "  \"dueAt\": \"ISO 8601 format use UTC+05:30 and  extract the timing from the input  where input contains endAt or lasts: timing also convert the time do not return +05:30 and we are in 2025\",\n" +
