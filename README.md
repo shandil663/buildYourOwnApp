@@ -22,12 +22,12 @@ TaskGenius is a voice-enabled, AI-assisted productivity app built as part of the
 | Layer          | Technologies Used                                                                 |
 |----------------|------------------------------------------------------------------------------------|
 | **Language**   | Kotlin                                                                             |
-| **Architecture** | MVVM + Clean Architecture (Presentation, Domain, Data Layers)                  |
+| **Architecture** | MVVM + Clean Architecture (Presentation, Data Layers)                  |
 | **UI**         | Jetpack Compose, Material 3                                                       |
 | **Persistence**| Room Database (SQLite abstraction)                                                |
 | **Async Work** | Kotlin Coroutines + Flow                                                          |
 | **Navigation** | Navigation Compose                                                                |
-| **Other APIs** | App Startup API, Speech-to-Text API                                               |
+| **Other APIs** | Gemini API, Speech-to-Text API                                               |
 | **Charts**     | Custom Canvas Drawing for Donut Chart & Timer                                     |
 
 ---
