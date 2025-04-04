@@ -37,3 +37,20 @@ TaskGenius is a voice-enabled, AI-assisted productivity app built as part of the
 Check out the video demo showcasing full functionality *https://drive.google.com/drive/folders/1MxzyxrJb8uYiGPAvUqC1Tila2drLtuhN?usp=sharing*
 
 ---
+
+## ⚠️ Known Limitations
+
+- Smart scheduling logic is basic and rule-based.
+- Currently portrait-mode only.
+- No cloud sync.
+- UI can be improved.
+
+---
+
+## 🛤️ Future Improvements
+
+- 🧠 Smarter scheduling using ML models or user behavior tracking.
+- ☁️ Cloud sync with Firebase/Google account.
+- 📈 Weekly progress stats & insights.
+
+---
